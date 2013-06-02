@@ -1,0 +1,37 @@
+{
+  "name": "chalet",
+  "version": "0.0.1",
+  "description": "A promise-based Redis client for Node.",
+  "keywords": ["redis", "database", "promise"],
+  "author": "Kit Cambridge <github@kitcambridge.be> (http://kitcambridge.be/)",
+  "contributors": [
+    "C J Silverio <ceejceej@gmail.com> (http://ceejbot.github.io/)"
+  ],
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kitcambridge/chalet.git"
+  },
+  "bugs": {
+    "url": "https://guthub.com/kitcambridge/chalet/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "*",
+    "hiredis": "*",
+    "p-promise": "*"
+  },
+  "devDependencies": {
+    "mocha-as-promised": "*",
+    "chai-as-promised": "*",
+    "semver": "*",
+    "blanket": "*"
+  },
+  "scripts": {
+    "test": "make test && make test-cov",
+    "blanket": {
+      "pattern": "//^((?!/node_modules|test|examples/).)*$/ig",
+      "onlyCwd": true
+    }
+  }
+}
