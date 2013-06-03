@@ -1017,7 +1017,7 @@ describe('Chalet', function()
 
         return P.all(
         [
-            missingValue.should.be.rejected.with(/requires an argument value/),
+            missingValue.should.be.rejected.with(/additional arguments/),
             client.send('set', 'set key', 'set val').should.become('OK'),
             client.send('get', 'set key').should.become('set val'),
         ]).should.be.fulfilled;
@@ -1063,7 +1063,7 @@ describe('Chalet', function()
 
         return P.all(
         [
-            missingValue.should.be.rejected.with(/requires an argument value/),
+            missingValue.should.be.rejected.with(/additional arguments/),
             client.send('setex', 'setex key', '100', 'setex val').should.become('OK'),
             client.send('exists', 'setex key').should.become(1),
             client.send('ttl', 'setex key').should.eventually.be.above(0)
