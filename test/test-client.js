@@ -286,11 +286,14 @@ describe('Chalet', function()
                 [
                     promise.should.become('eval get sha test'),
                     // test {EVALSHA - Can we call a SHA1 if already defined?}
-                    client.send('evalsha', commandSha, 0).should.become('eval get sha test'),
+                    promise.then(function()
+                    {
+                        return client.send('evalsha', commandSha, 0);
+                    }).should.become('eval get sha test'),
                     // test {EVALSHA - Do we get an error on non defined SHA1?}
-                    client.send('evalsha', 'ffffffffffffffffffffffffffffffffffffffff', 0).should.be.rejected
+                    client.send('evalsha', 'ffffffffffffffffffffffffffffffffffffffff', 0).should.be.rejected.with(/noscript/i)
                 ]).should.be.fulfilled;
-            }),
+            }).should.be.fulfilled,
 
             client.send('set', 'incr key', 0).then(function()
             {
