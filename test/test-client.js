@@ -57,15 +57,24 @@ describe('Chalet', function()
         }).should.become(0);
     });
 
+    it('should allow empty transactions', function()
+    {
+        var transaction = client.transact();
+        return P.all(
+        [
+            transaction.should.be.fulfilled,
+            transaction.should.become([])
+        ]).should.be.fulfilled;
+    });
+
     it('should reject transactions with invalid arguments', function()
     {
         var multi1 = client.transact(
-        [
             ['mset', ['multifoo', '10', 'multibar', '20']],
             ['set', ['foo2']],
             ['incr', ['multifoo']],
             ['incr', ['multibar']]
-        ]);
+        );
 
         var expectedBar = 1,
             expectedFoo = 1;
@@ -82,10 +91,9 @@ describe('Chalet', function()
             multi1.fail(function(results)
             {
                 var promise = client.transact(
-                [
-                    ['incr', ['multibar']],
-                    ['incr', ['multifoo']]
-                ]);
+                    ['incr', 'multibar'],
+                    ['incr', 'multifoo']
+                );
                 return promise.should.be.fulfilled;
             }).should.become(
             [
@@ -98,12 +106,11 @@ describe('Chalet', function()
     it('should not persist updates for aborted transactions', function()
     {
         var promise = client.transact(
-        [
-            ['mget', ['multifoo', 'multibar']],
-            ['set', ['foo2']],
-            ['incr', ['multifoo']],
-            ['incr', ['multibar']]
-        ]);
+            ['mget', 'multifoo', 'multibar'],
+            ['set', 'foo2'],
+            ['incr', 'multifoo'],
+            ['incr', 'multibar']
+        );
 
         if (semver.lt(client.serverInfo.redis_version, '2.6.5'))
             return P();
@@ -144,12 +151,12 @@ describe('Chalet', function()
                 return P.all([members.should.be.fulfilled, members.should.become([])]);
             }).then(function()
             {
-                var transaction = client.transact([
-                    ['smembers', ['some set']],
-                    ['del', ['some set']],
-                    ['smembers', ['some set']],
-                    ['scard', ['some set']]
-                ]);
+                var transaction = client.transact(
+                    ['smembers', 'some set'],
+                    ['del', 'some set'],
+                    ['smembers', 'some set'],
+                    ['scard', 'some set']
+                );
                 return transaction.should.be.fulfilled;
             })
         ]).should.be.fulfilled;
@@ -158,12 +165,11 @@ describe('Chalet', function()
     it('should fulfill transaction promises with their respective values', function()
     {
         var transaction = client.transact(
-        [
             ['mset', ['some', '10', 'keys', '20']],
-            ['incr', ['some']],
-            ['incr', ['keys']],
-            ['mget', ['some', 'keys']]
-        ]);
+            ['incr', 'some'],
+            ['incr', 'keys'],
+            ['mget', 'some', 'keys']
+        );
 
         return P.all(
         [
@@ -180,10 +186,9 @@ describe('Chalet', function()
     it('should support aggregate values', function()
     {
         var transaction = client.transact(
-        [
-            ['mget', ['multifoo', 'some', 'random', 'keys']],
-            ['incr', ['multifoo']]
-        ]);
+            ['mget', 'multifoo', 'some', 'random', 'keys'],
+            ['incr', 'multifoo']
+        );
 
         return P.all([
             transaction.should.be.fulfilled,
@@ -198,11 +203,10 @@ describe('Chalet', function()
     it('should support expanding `HGETALL` results', function()
     {
         var transaction = client.transact(
-        [
-            ['hmset', ['multihash', 'a', 'foo', 'b', 1]],
-            ['hmset', ['multihash', { 'extra': 'fancy', 'things': 'here' }]],
-            ['hgetall', ['multihash']]
-        ]);
+            ['hmset', 'multihash', 'a', 'foo', 'b', 1],
+            ['hmset', 'multihash', { 'extra': 'fancy', 'things': 'here' }],
+            ['hgetall', 'multihash']
+        );
 
         return P.all(
         [
@@ -219,7 +223,7 @@ describe('Chalet', function()
     {
         if (semver.lt(client.serverInfo.redis_version, '2.6.5'))
             return P();
-        var transaction = client.transact([['set', ['foo']]]);
+        var transaction = client.transact(['set', 'foo']);
         return transaction.should.be.rejected.with(/execabort/i);
     });
 
@@ -303,12 +307,12 @@ describe('Chalet', function()
             }).should.be.fulfilled,
 
             // test {EVAL - Redis multi bulk -> Lua type conversion}
-            client.transact([
-                ['del', ['mylist']],
-                ['rpush', ['mylist', 'a']],
-                ['rpush', ['mylist', 'b']],
-                ['rpush', ['mylist', 'c']]
-            ]).then(function()
+            client.transact(
+                ['del', 'mylist'],
+                ['rpush', 'mylist', 'a'],
+                ['rpush', 'mylist', 'b'],
+                ['rpush', 'mylist', 'c']
+            ).then(function()
             {
                 var promise = client.eval("local foo = redis.call('lrange','mylist',0,-1); return {type(foo),foo[1],foo[2],foo[3],# foo}", 0);
                 return promise.should.be.fulfilled;
@@ -345,7 +349,7 @@ describe('Chalet', function()
 
         return promise.then(function()
         {
-            var transaction = client.transact([['script', ['load', command]]]);
+            var transaction = client.transact(['script', 'load', command]);
             return P.all(
             [
                 transaction.should.be.fulfilled,
@@ -364,7 +368,7 @@ describe('Chalet', function()
 
         var promise = bclient.send('client', 'list').then(function()
         {
-            return client.transact([['client', 'list']]);
+            return client.transact(['client', 'list']);
         }).spread(function(reply)
         {
             return String(reply.value).split('\n').slice(0, -1);
@@ -396,7 +400,7 @@ describe('Chalet', function()
 
         client.send('watch', key);
         client.send('incr', key);
-        var transaction = client.transact([['incr', ['watch multi']]]);
+        var transaction = client.transact(['incr', 'watch multi']);
         return P.all(
         [
             transaction.should.be.fulfilled,
@@ -416,7 +420,7 @@ describe('Chalet', function()
         client.send('watch', key);
         client.send('incr', key);
 
-        var transaction = client.transact([['incr', [key]]]);
+        var transaction = client.transact(['incr', key]);
 
         return P.all([
             transaction.should.be.fulfilled,
