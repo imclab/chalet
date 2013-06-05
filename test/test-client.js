@@ -18,7 +18,7 @@ var expect = chai.expect,
 require('mocha-as-promised')();
 chai.use(chaiAsPromised);
 
-describe('Chalet', function()
+describe('Chalet Client', function()
 {
     this.timeout(0);
 
@@ -30,8 +30,8 @@ describe('Chalet', function()
     before(function()
     {
         client = chalet.createClient(port, host);
-        client2 = chalet.createClient(port, host);
-        client3 = chalet.createClient(port, host);
+        client2 = chalet.createClient(port);
+        client3 = chalet.createClient(host);
         bclient = chalet.createClient({ 'port': port, 'host': host, 'returnBuffers': true });
         return P.all(_.invoke([client, client2, client3, bclient], 'connect')).should.be.fulfilled;
     });
@@ -472,19 +472,11 @@ describe('Chalet', function()
 
     it('should support the `noDelay` option', function()
     {
-        var noDelayClient = chalet.createClient({ 'port': port, 'host': host, 'noDelay': true }),
-            delayClient = chalet.createClient({ 'port': port, 'host': host, 'noDelay': false }),
-            defaultClient = chalet.createClient(port, host);
+        var noDelayConnection = chalet.createConnection({ 'port': port, 'host': host, 'noDelay': true }),
+            delayConnection = chalet.createConnection({ 'port': port, 'host': host, 'noDelay': false }),
+            defaultConnection = chalet.createConnection(port, host);
 
-        var noDelayReady = P.defer(),
-            delayReady = P.defer(),
-            defaultReady = P.defer();
-
-        noDelayClient.on('ready', noDelayReady.resolve).connect();
-        delayClient.on('ready', delayReady.resolve).connect();
-        defaultClient.on('ready', defaultReady.resolve).connect();
-
-        return P.all([noDelayReady.promise, delayReady.promise, defaultReady.promise]).then(function()
+        return P.all([noDelayConnection, delayConnection, defaultConnection]).spread(function(noDelayClient, delayClient, defaultClient)
         {
             return P.all(
             [
@@ -510,8 +502,8 @@ describe('Chalet', function()
                 noDelayClient.send('quit').should.become('OK'),
                 delayClient.send('quit').should.become('OK'),
                 defaultClient.send('quit').should.become('OK')
-            ]);
-        }).should.be.fulfilled;
+            ]).should.be.fulfilled;
+        });
     });
 
     it('should reconnect after a socket hang-up', function()
