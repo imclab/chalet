@@ -1586,13 +1586,17 @@ describe('Chalet', function()
 
     it('should queue offline commands if the `enableOfflineQueue` option is set', function()
     {
-        var offlineClient = chalet.createClient({ 'port': 9999, 'host': null, 'maxAttempts': 1 });
+        var offlineClient = chalet.createClient({ 'port': 9999, 'host': null, 'maxAttempts': 1 }),
+            deferred = P.defer();
+
+        offlineClient.on('error', deferred.reject);
 
         var connection = offlineClient.connect();
 
         return P.all(
         [
             connection.should.be.rejected,
+            deferred.promise.should.be.rejected,
             // The promise will be kept in the pending state until a
             // connection can be established.
             offlineClient.send('set', 'offline queue', 'queued set operation').timeout(25).should.be.rejected,
@@ -1602,13 +1606,17 @@ describe('Chalet', function()
 
     it('should reject offline commands if offline queueing is disabled', function()
     {
-        var offlineClient = chalet.createClient({ 'port': 9999, 'host': null, 'maxAttempts': 1, 'enableOfflineQueue': false });
+        var offlineClient = chalet.createClient({ 'port': 9999, 'host': null, 'maxAttempts': 1, 'enableOfflineQueue': false }),
+            deferred = P.defer();
+
+        offlineClient.on('error', deferred.reject);
 
         var connection = offlineClient.connect();
 
         return P.all(
         [
             connection.should.be.rejected,
+            deferred.promise.should.be.rejected,
             offlineClient.send('set', 'no offline queue', 'rejected set operation').should.be.rejected
         ]).should.be.fulfilled;
     });
