@@ -108,7 +108,7 @@ Connection.prototype.set = function set(key, value, ttl, callback)
     this.client.send('set', cacheKey, stringifiedEnvelope).then(function()
     {
         var ttlSec = Math.max(1, Math.floor(ttl / 1000));
-        return self.client.send('ttl', ttlSec);
+        return self.client.send('expire', ttlSec);
     }).then(function() { callback(null); }, callback).done();
 };
 
